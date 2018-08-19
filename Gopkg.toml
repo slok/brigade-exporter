@@ -1,0 +1,25 @@
+# Override k8s deps.
+[[override]]
+  name = "k8s.io/client-go"
+  version = "7.0.0"
+
+[[constraint]]
+  name = "github.com/Azure/brigade"
+  version = "v0.16.0"
+
+[[constraint]]
+  name = "github.com/prometheus/client_golang"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.6"
+
+[[constraint]]
+  name = "github.com/oklog/run"
+  version = "1.0.0"
+
+
+[prune]
+  go-tests = true
+  unused-packages = true
