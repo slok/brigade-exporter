@@ -15,7 +15,7 @@ const (
 	namespace = "brigade"
 
 	// Defaults.
-	collectTimeoutDef = 5 * time.Second
+	collectTimeoutDef = 60 * time.Second
 )
 
 // Config is the Exporter configuration.
@@ -51,6 +51,7 @@ func NewExporter(cfg Config, brigadeSVC brigade.Interface, logger log.Logger) pr
 	// Generate subcollectors.
 	sc := map[string]subcollector{
 		"projects": NewProject(brigadeSVC, logger.With("collector", "projects")),
+		"builds":   NewBuild(brigadeSVC, logger.With("collector", "builds")),
 	}
 
 	return &Exporter{

@@ -13,6 +13,10 @@ import (
 	"github.com/slok/brigade-exporter/pkg/service/brigade"
 )
 
+const (
+	projectInfoDesc = `Desc{fqName: "brigade_project_info", help: "Brigade project information.", constLabels: {}, variableLabels: [id name repository namespace worker]}`
+)
+
 func TestProjectSubcollector(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -28,9 +32,24 @@ func TestProjectSubcollector(t *testing.T) {
 				&brigade.Project{ID: "id3", Name: "Name3", Repository: "repo3", Namespace: "ns3", Worker: "worker3"},
 			},
 			expMetrics: []metricResult{
-				metricResult{labels: labelMap{"id": "id1", "name": "Name1", "repository": "repo1", "namespace": "ns1", "worker": "worker1"}, value: 1, metricType: dto.MetricType_GAUGE},
-				metricResult{labels: labelMap{"id": "id2", "name": "Name2", "repository": "repo2", "namespace": "ns2", "worker": "worker2"}, value: 1, metricType: dto.MetricType_GAUGE},
-				metricResult{labels: labelMap{"id": "id3", "name": "Name3", "repository": "repo3", "namespace": "ns3", "worker": "worker3"}, value: 1, metricType: dto.MetricType_GAUGE},
+				metricResult{
+					desc:       projectInfoDesc,
+					labels:     labelMap{"id": "id1", "name": "Name1", "repository": "repo1", "namespace": "ns1", "worker": "worker1"},
+					value:      1,
+					metricType: dto.MetricType_GAUGE,
+				},
+				metricResult{
+					desc:       projectInfoDesc,
+					labels:     labelMap{"id": "id2", "name": "Name2", "repository": "repo2", "namespace": "ns2", "worker": "worker2"},
+					value:      1,
+					metricType: dto.MetricType_GAUGE,
+				},
+				metricResult{
+					desc:       projectInfoDesc,
+					labels:     labelMap{"id": "id3", "name": "Name3", "repository": "repo3", "namespace": "ns3", "worker": "worker3"},
+					value:      1,
+					metricType: dto.MetricType_GAUGE,
+				},
 			},
 		},
 	}
