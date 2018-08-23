@@ -61,8 +61,8 @@ func (f *fake) GetJobs() ([]*Job, error) {
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {
 			jobs = append(jobs, &Job{
-				ID:       fmt.Sprintf("job-id-%d", i),
-				Name:     fmt.Sprintf("job-%d", i),
+				ID:       fmt.Sprintf("job-id-%d%d%d", i, j, i),
+				Name:     fmt.Sprintf("job-%d%d%d", i, j, i),
 				BuildID:  fmt.Sprintf("build-id-%d%d", i, j),
 				Image:    fmt.Sprintf("fake/job-image:%d%d", i, j),
 				Status:   fakedJobStatus[time.Now().UnixNano()%int64(len(fakedJobStatus))].String(),
