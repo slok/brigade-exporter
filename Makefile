@@ -25,6 +25,7 @@ INTEGRATION_TEST_CMD := ./hack/scripts/integration-test.sh
 MOCKS_CMD := ./hack/scripts/mockgen.sh
 DOCKER_RUN_CMD := docker run -v ${PWD}:$(DOCKER_GO_SERVICE_PATH) --rm -it $(SERVICE_NAME)
 BUILD_BINARY_CMD := VERSION=${VERSION} ./hack/scripts/build-binary.sh
+BUILD_IMAGE_CMD := VERSION=${VERSION} ./hack/scripts/build-image.sh
 DEP_ENSURE_CMD := dep ensure
 DEBUG_CMD := go run ./cmd/brigade-exporter/* --debug
 DEV_CMD := $(DEBUG_CMD) --development
