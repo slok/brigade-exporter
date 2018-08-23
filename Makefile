@@ -16,14 +16,15 @@ GID := $(shell id -g)
 # Get the unix user id for the user running make (to be used by docker-compose later)
 UID := $(shell id -u)
 
-# Commit hash from git
-COMMIT=$(shell git rev-parse --short HEAD)
+# Version from Git.
+VERSION=$(shell git describe --tags --always)
 
 # cmds
 UNIT_TEST_CMD := ./hack/scripts/unit-test.sh
 INTEGRATION_TEST_CMD := ./hack/scripts/integration-test.sh
 MOCKS_CMD := ./hack/scripts/mockgen.sh
 DOCKER_RUN_CMD := docker run -v ${PWD}:$(DOCKER_GO_SERVICE_PATH) --rm -it $(SERVICE_NAME)
+BUILD_BINARY_CMD := VERSION=${VERSION} ./hack/scripts/build-binary.sh
 DEP_ENSURE_CMD := dep ensure
 DEBUG_CMD := go run ./cmd/brigade-exporter/* --debug
 DEV_CMD := $(DEBUG_CMD) --development

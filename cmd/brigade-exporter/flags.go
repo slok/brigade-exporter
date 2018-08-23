@@ -24,6 +24,7 @@ type flags struct {
 	development   bool
 	fake          bool
 	debug         bool
+	version       bool
 }
 
 // NewFlags returns a new flags object.
@@ -46,6 +47,7 @@ func (f *flags) init() {
 	f.fs.BoolVar(&f.development, "development", false, "development flag will run the exporter in development mode")
 	f.fs.BoolVar(&f.fake, "fake", false, "fake flag will run the exporter faking the data from brigade")
 	f.fs.BoolVar(&f.debug, "debug", false, "enable debug mode")
+	f.fs.BoolVar(&f.version, "version", false, "show version")
 
 	// Parse flags
 	f.fs.Parse(os.Args[1:])

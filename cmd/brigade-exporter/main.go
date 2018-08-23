@@ -25,6 +25,12 @@ import (
 
 const (
 	gracePeriod = 5 * time.Second
+	versionFMT  = "brigade-exporter %s"
+)
+
+var (
+	// Version is the app version.
+	Version = "dev"
 )
 
 // Main is the main programm
@@ -35,6 +41,11 @@ type Main struct {
 
 // Run will run the main program.
 func (m *Main) Run() error {
+
+	if m.flags.version {
+		m.printVersion()
+		return nil
+	}
 
 	// If not development json logger.
 	m.logger = log.Base(!m.flags.development)
@@ -137,6 +148,11 @@ func (m *Main) createKubernetesClient() (kubernetes.Interface, error) {
 	return kubernetes.NewForConfig(config)
 }
 
+// printVersion prints the version of the app.
+func (m *Main) printVersion() {
+	fmt.Fprintf(os.Stdout, versionFMT, Version)
+}
+
 func main() {
 	m := &Main{
 		flags: NewFlags(),
@@ -146,7 +162,5 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error executing: %s\n", err)
 		os.Exit(1)
 	}
-
-	fmt.Fprintf(os.Stdout, "app finished successfully\n")
 	os.Exit(0)
 }
