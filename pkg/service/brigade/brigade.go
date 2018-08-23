@@ -108,5 +108,55 @@ func (b *brigade) getBuildDuration(bld *azurebrigade.Build) time.Duration {
 }
 
 func (b *brigade) GetJobs() ([]*Job, error) {
-	return []*Job{}, nil
+	builds, err := b.client.GetBuilds()
+	if err != nil {
+		return []*Job{}, err
+	}
+
+	// WARNING: N:M query.
+	var jobs []*Job
+	for _, bld := range builds {
+		bjobs, err := b.client.GetBuildJobs(bld)
+		if err != nil {
+			return []*Job{}, err
+		}
+
+		for _, job := range bjobs {
+			if job == nil {
+				continue
+			}
+
+			jobs = append(jobs, &Job{
+				ID:       job.ID,
+				BuildID:  bld.ID,
+				Name:     job.Name,
+				Image:    job.Image,
+				Status:   job.Status.String(),
+				Duration: b.getJobDuration(job),
+			})
+		}
+
+	}
+
+	return jobs, nil
+}
+
+func (b *brigade) getJobDuration(job *azurebrigade.Job) time.Duration {
+	if job == nil {
+		return 0
+	}
+
+	var duration time.Duration
+
+	// Only get duration if build finished.
+	if job.Status == azurebrigade.JobSucceeded || job.Status == azurebrigade.JobFailed {
+		duration = job.EndTime.Sub(job.StartTime)
+	}
+
+	// Only return if is a valid duration.
+	if duration > 0 {
+		return duration
+	}
+
+	return 0
 }
