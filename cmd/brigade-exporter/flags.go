@@ -10,8 +10,9 @@ import (
 
 // Defaults.
 const (
-	listenAddrDef = ":9418"
-	namespaceDef  = "default"
+	listenAddrDef  = ":9418"
+	metricsPathDef = "/metrics"
+	namespaceDef   = "default"
 )
 
 // flags are the flags of the app
@@ -20,6 +21,7 @@ type flags struct {
 
 	kubeConfig    string
 	listenAddress string
+	metricsPath   string
 	namespace     string
 	development   bool
 	fake          bool
@@ -43,6 +45,7 @@ func (f *flags) init() {
 	// register flags
 	f.fs.StringVar(&f.kubeConfig, "kubeconfig", kubehome, "kubernetes configuration path, only used when development mode enabled")
 	f.fs.StringVar(&f.listenAddress, "listen-addr", listenAddrDef, "the address the exporter will be serving the metrics")
+	f.fs.StringVar(&f.metricsPath, "metrics-path", metricsPathDef, "the path to serve the metrics")
 	f.fs.StringVar(&f.namespace, "namespace", namespaceDef, "the namespace of brigade")
 	f.fs.BoolVar(&f.development, "development", false, "development flag will run the exporter in development mode")
 	f.fs.BoolVar(&f.fake, "fake", false, "fake flag will run the exporter faking the data from brigade")

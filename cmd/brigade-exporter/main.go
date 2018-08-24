@@ -94,11 +94,20 @@ func (m *Main) Run() error {
 		// Prepare server
 		h := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{})
 		mux := http.NewServeMux()
-		mux.Handle("/metrics", h)
+		mux.Handle(m.flags.metricsPath, h)
 		s := http.Server{
 			Handler: mux,
 			Addr:    m.flags.listenAddress,
 		}
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte(`<html>
+			<head><title>Brigade Exporter</title></head>
+			<body>
+			<h1>Brigade Exporter</h1>
+			<p><a href="` + m.flags.metricsPath + `">Metrics</a></p>
+			</body>
+			</html>`))
+		})
 
 		g.Add(
 			func() error {
