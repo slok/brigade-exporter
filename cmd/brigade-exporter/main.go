@@ -87,7 +87,12 @@ func (m *Main) Run() error {
 		}
 
 		// Prepare collector.
-		clr := collector.NewExporter(collector.Config{}, brigadeSVC, m.logger)
+		cfg := collector.Config{
+			DisableProjects: m.flags.disableProjectCollector,
+			DisableBuilds:   m.flags.disableBuildCollector,
+			DisableJobs:     m.flags.disableJobCollector,
+		}
+		clr := collector.NewExporter(cfg, brigadeSVC, m.logger)
 		promReg := prometheus.NewRegistry()
 		promReg.MustRegister(clr)
 

@@ -19,14 +19,17 @@ const (
 type flags struct {
 	fs *flag.FlagSet
 
-	kubeConfig    string
-	listenAddress string
-	metricsPath   string
-	namespace     string
-	development   bool
-	fake          bool
-	debug         bool
-	version       bool
+	kubeConfig              string
+	listenAddress           string
+	metricsPath             string
+	namespace               string
+	disableProjectCollector bool
+	disableBuildCollector   bool
+	disableJobCollector     bool
+	development             bool
+	fake                    bool
+	debug                   bool
+	version                 bool
 }
 
 // NewFlags returns a new flags object.
@@ -47,6 +50,9 @@ func (f *flags) init() {
 	f.fs.StringVar(&f.listenAddress, "listen-addr", listenAddrDef, "the address the exporter will be serving the metrics")
 	f.fs.StringVar(&f.metricsPath, "metrics-path", metricsPathDef, "the path to serve the metrics")
 	f.fs.StringVar(&f.namespace, "namespace", namespaceDef, "the namespace of brigade")
+	f.fs.BoolVar(&f.disableProjectCollector, "disable-project-collector", false, "disables the metric gathering for brigade projects")
+	f.fs.BoolVar(&f.disableBuildCollector, "disable-build-collector", false, "disables the metric gathering for brigade builds")
+	f.fs.BoolVar(&f.disableJobCollector, "disable-job-collector", false, "disables the metric gathering for brigade jobs")
 	f.fs.BoolVar(&f.development, "development", false, "development flag will run the exporter in development mode")
 	f.fs.BoolVar(&f.fake, "fake", false, "fake flag will run the exporter faking the data from brigade")
 	f.fs.BoolVar(&f.debug, "debug", false, "enable debug mode")
