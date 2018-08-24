@@ -22,10 +22,9 @@ const (
 
 func TestBuildSubcollector(t *testing.T) {
 	tests := []struct {
-		name        string
-		exporterCfg collector.Config
-		builds      []*brigade.Build
-		expMetrics  []metricResult
+		name       string
+		builds     []*brigade.Build
+		expMetrics []metricResult
 	}{
 		{
 			name: "With multiple builds the collected metrics should be of all the builds.",

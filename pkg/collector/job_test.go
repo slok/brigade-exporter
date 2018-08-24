@@ -22,10 +22,9 @@ const (
 
 func TestJobSubcollector(t *testing.T) {
 	tests := []struct {
-		name        string
-		exporterCfg collector.Config
-		jobs        []*brigade.Job
-		expMetrics  []metricResult
+		name       string
+		jobs       []*brigade.Job
+		expMetrics []metricResult
 	}{
 		{
 			name: "With multiple jobs the collected metrics should be of all the jobs.",

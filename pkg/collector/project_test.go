@@ -19,10 +19,9 @@ const (
 
 func TestProjectSubcollector(t *testing.T) {
 	tests := []struct {
-		name        string
-		exporterCfg collector.Config
-		projects    []*brigade.Project
-		expMetrics  []metricResult
+		name       string
+		projects   []*brigade.Project
+		expMetrics []metricResult
 	}{
 		{
 			name: "With multiple projects the collected metrics should be of all the projects.",
