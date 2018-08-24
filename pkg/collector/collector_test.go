@@ -37,30 +37,31 @@ var (
 
 func TestExporter(t *testing.T) {
 	tests := []struct {
-		name        string
-		exporterCfg collector.Config
-		projects    []*brigade.Project
-		builds      []*brigade.Build
-		jobs        []*brigade.Job
-		expMetrics  []string
+		name          string
+		exporterCfg   collector.Config
+		projects      []*brigade.Project
+		builds        []*brigade.Build
+		jobs          []*brigade.Job
+		expMetrics    []string
+		notExpMetrics []string
 	}{
 		{
-			name:     "By default the exporter should return metrics about all the subcollectors.",
+			name:     "By default the exporter should return metrics from all subcollectors.",
 			projects: testProjects,
 			builds:   testBuilds,
 			jobs:     testJobs,
 			expMetrics: []string{
 				// Exporter metrics.
+				`brigade_exporter_collector_success{collector="projects"} 1`,
 				`brigade_exporter_collector_success{collector="builds"} 1`,
 				`brigade_exporter_collector_success{collector="jobs"} 1`,
-				`brigade_exporter_collector_success{collector="projects"} 1`,
 
-				//Project metrics.
+				// Brigade projects metrics.
 				`brigade_project_info{id="id1",name="Name1",namespace="ns1",repository="repo1",worker="worker1"} 1`,
 				`brigade_project_info{id="id2",name="Name2",namespace="ns2",repository="repo2",worker="worker2"} 1`,
 				`brigade_project_info{id="id3",name="Name3",namespace="ns3",repository="repo3",worker="worker3"} 1`,
 
-				// Build metrics.
+				// Brigade builds metrics.
 				`brigade_build_info{event_type="deploy",id="id3",project_id="prj3",provider="toilet",version="1234567892"} 1`,
 				`brigade_build_info{event_type="pull_request",id="id2",project_id="prj2",provider="github",version="1234567891"} 1`,
 				`brigade_build_info{event_type="push",id="id1",project_id="prj1",provider="gitlab",version="1234567890"} 1`,
@@ -71,7 +72,7 @@ func TestExporter(t *testing.T) {
 				`brigade_build_status{id="id2",status="Pending"} 1`,
 				`brigade_build_status{id="id3",status="Failed"} 1`,
 
-				//Job metrics.
+				// Brigade Jobs metrics.
 				`brigade_job_info{build_id="bld1",id="id1",image="image1",name="id-name-1"} 1`,
 				`brigade_job_info{build_id="bld2",id="id2",image="image2",name="id-name-2"} 1`,
 				`brigade_job_info{build_id="bld3",id="id3",image="image3",name="id-name-3"} 1`,
@@ -81,6 +82,98 @@ func TestExporter(t *testing.T) {
 				`brigade_job_status{id="id1",status="Running"} 1`,
 				`brigade_job_status{id="id2",status="Pending"} 1`,
 				`brigade_job_status{id="id3",status="Failed"} 1`,
+			},
+			notExpMetrics: []string{},
+		},
+		{
+			name: "Disabling all the subcollectors except the projects it shouñld return only the projects metrics.",
+			exporterCfg: collector.Config{
+				DisableBuilds: true,
+				DisableJobs:   true,
+			},
+			projects: testProjects,
+			builds:   testBuilds,
+			jobs:     testJobs,
+			expMetrics: []string{
+				// Exporter metrics.
+				`brigade_exporter_collector_success{collector="projects"} 1`,
+
+				// Brigade projects metrics.
+				`brigade_project_info{id="id1",name="Name1",namespace="ns1",repository="repo1",worker="worker1"} 1`,
+				`brigade_project_info{id="id2",name="Name2",namespace="ns2",repository="repo2",worker="worker2"} 1`,
+				`brigade_project_info{id="id3",name="Name3",namespace="ns3",repository="repo3",worker="worker3"} 1`,
+			},
+			notExpMetrics: []string{
+				// Exporter metrics.
+				`brigade_exporter_collector_success{collector="builds"} 1`,
+				`brigade_exporter_collector_success{collector="jobs"} 1`,
+
+				// Brigade builds metrics.
+				`brigade_build_info{event_type="deploy",id="id3",project_id="prj3",provider="toilet",version="1234567892"} 1`,
+				`brigade_build_info{event_type="pull_request",id="id2",project_id="prj2",provider="github",version="1234567891"} 1`,
+				`brigade_build_info{event_type="push",id="id1",project_id="prj1",provider="gitlab",version="1234567890"} 1`,
+				`brigade_build_duration_seconds{id="id1"} 125`,
+				`brigade_build_duration_seconds{id="id2"} 340`,
+				`brigade_build_duration_seconds{id="id3"} 18`,
+				`brigade_build_status{id="id1",status="Running"} 1`,
+				`brigade_build_status{id="id2",status="Pending"} 1`,
+				`brigade_build_status{id="id3",status="Failed"} 1`,
+
+				// Brigade Jobs metrics.
+				`brigade_job_info{build_id="bld1",id="id1",image="image1",name="id-name-1"} 1`,
+				`brigade_job_info{build_id="bld2",id="id2",image="image2",name="id-name-2"} 1`,
+				`brigade_job_info{build_id="bld3",id="id3",image="image3",name="id-name-3"} 1`,
+				`brigade_job_duration_seconds{id="id1"} 125`,
+				`brigade_job_duration_seconds{id="id2"} 340`,
+				`brigade_job_duration_seconds{id="id3"} 18`,
+				`brigade_job_status{id="id1",status="Running"} 1`,
+				`brigade_job_status{id="id2",status="Pending"} 1`,
+				`brigade_job_status{id="id3",status="Failed"} 1`,
+			},
+		},
+		{
+			name: "Disabling project subcollectors should return everything except project metrics.",
+			exporterCfg: collector.Config{
+				DisableProjects: true,
+			},
+			projects: testProjects,
+			builds:   testBuilds,
+			jobs:     testJobs,
+			expMetrics: []string{
+				// Exporter metrics.
+				`brigade_exporter_collector_success{collector="builds"} 1`,
+				`brigade_exporter_collector_success{collector="jobs"} 1`,
+
+				// Brigade builds metrics.
+				`brigade_build_info{event_type="deploy",id="id3",project_id="prj3",provider="toilet",version="1234567892"} 1`,
+				`brigade_build_info{event_type="pull_request",id="id2",project_id="prj2",provider="github",version="1234567891"} 1`,
+				`brigade_build_info{event_type="push",id="id1",project_id="prj1",provider="gitlab",version="1234567890"} 1`,
+				`brigade_build_duration_seconds{id="id1"} 125`,
+				`brigade_build_duration_seconds{id="id2"} 340`,
+				`brigade_build_duration_seconds{id="id3"} 18`,
+				`brigade_build_status{id="id1",status="Running"} 1`,
+				`brigade_build_status{id="id2",status="Pending"} 1`,
+				`brigade_build_status{id="id3",status="Failed"} 1`,
+
+				// Brigade Jobs metrics.
+				`brigade_job_info{build_id="bld1",id="id1",image="image1",name="id-name-1"} 1`,
+				`brigade_job_info{build_id="bld2",id="id2",image="image2",name="id-name-2"} 1`,
+				`brigade_job_info{build_id="bld3",id="id3",image="image3",name="id-name-3"} 1`,
+				`brigade_job_duration_seconds{id="id1"} 125`,
+				`brigade_job_duration_seconds{id="id2"} 340`,
+				`brigade_job_duration_seconds{id="id3"} 18`,
+				`brigade_job_status{id="id1",status="Running"} 1`,
+				`brigade_job_status{id="id2",status="Pending"} 1`,
+				`brigade_job_status{id="id3",status="Failed"} 1`,
+			},
+			notExpMetrics: []string{
+				// Exporter metrics.
+				`brigade_exporter_collector_success{collector="projects"} 1`,
+
+				// Brigade projects metrics.
+				`brigade_project_info{id="id1",name="Name1",namespace="ns1",repository="repo1",worker="worker1"} 1`,
+				`brigade_project_info{id="id2",name="Name2",namespace="ns2",repository="repo2",worker="worker2"} 1`,
+				`brigade_project_info{id="id3",name="Name3",namespace="ns3",repository="repo3",worker="worker3"} 1`,
 			},
 		},
 	}
@@ -108,11 +201,17 @@ func TestExporter(t *testing.T) {
 
 			resp := rec.Result()
 
-			// Check all metrics are present.
 			if assert.Equal(http.StatusOK, resp.StatusCode) {
 				body, _ := ioutil.ReadAll(resp.Body)
+
+				// Check all exp metrics are present.
 				for _, expMetric := range test.expMetrics {
 					assert.Contains(string(body), expMetric, "metric not present on the result of metrics service")
+				}
+
+				// Check all not exp metrics are not present.
+				for _, notExpMetric := range test.notExpMetrics {
+					assert.NotContains(string(body), notExpMetric, "metric present on the result of metrics service, it shouldn't")
 				}
 			}
 		})

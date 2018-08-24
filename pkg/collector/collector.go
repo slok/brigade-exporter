@@ -20,7 +20,14 @@ const (
 
 // Config is the Exporter configuration.
 type Config struct {
+	// CollectTimeout is the timeout to collect the metrics.
 	CollectTimeout time.Duration
+	// DisableProjects will disable the project metrics subcollector.
+	DisableProjects bool
+	// DisableBuilds will disable the builds metrics subcollector.
+	DisableBuilds bool
+	// DisableJobs will disable the Jobs metrics subcollector.
+	DisableJobs bool
 }
 
 // defaults sets the required defaults.
@@ -48,14 +55,7 @@ func NewExporter(cfg Config, brigadeSVC brigade.Interface, logger log.Logger) pr
 	// Fill the required defaults.
 	cfg.defaults()
 
-	// Generate subcollectors.
-	sc := map[string]subcollector{
-		"projects": NewProject(brigadeSVC, logger.With("collector", "projects")),
-		"builds":   NewBuild(brigadeSVC, logger.With("collector", "builds")),
-		"jobs":     NewJob(brigadeSVC, logger.With("collector", "jobs")),
-	}
-
-	return &Exporter{
+	exporter := &Exporter{
 		scrapeDurationDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, "exporter", "collector_duration_seconds"),
 			"Collector time duration.",
@@ -69,9 +69,33 @@ func NewExporter(cfg Config, brigadeSVC brigade.Interface, logger log.Logger) pr
 			[]string{"collector"},
 			nil,
 		),
-		subcolls: sc,
-		cfg:      cfg,
-		logger:   logger,
+		cfg:    cfg,
+		logger: logger,
+	}
+
+	exporter.initSubcollectors(brigadeSVC)
+	return exporter
+}
+
+func (e *Exporter) initSubcollectors(brigadeSVC brigade.Interface) {
+	e.subcolls = map[string]subcollector{}
+
+	// Generate subcollectors.
+	if !e.cfg.DisableProjects {
+		e.subcolls["projects"] = NewProject(brigadeSVC, e.logger.With("collector", "projects"))
+	} else {
+		e.logger.Warnf("projects collector disabled")
+	}
+
+	if !e.cfg.DisableBuilds {
+		e.subcolls["builds"] = NewBuild(brigadeSVC, e.logger.With("collector", "builds"))
+	} else {
+		e.logger.Warnf("builds collector disabled")
+	}
+	if !e.cfg.DisableJobs {
+		e.subcolls["jobs"] = NewJob(brigadeSVC, e.logger.With("collector", "jobs"))
+	} else {
+		e.logger.Warnf("jobs collector disabled")
 	}
 }
 
