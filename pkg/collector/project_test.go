@@ -1,6 +1,7 @@
 package collector_test
 
 import (
+	"context"
 	"testing"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -66,7 +67,7 @@ func TestProjectSubcollector(t *testing.T) {
 			ch := make(chan prometheus.Metric)
 
 			go func() {
-				clr.Collect(ch)
+				clr.Collect(context.TODO(), ch)
 				close(ch)
 			}()
 

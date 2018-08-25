@@ -1,6 +1,8 @@
 package collector
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/slok/brigade-exporter/pkg/log"
@@ -49,7 +51,7 @@ func NewJob(brigadeSVC brigade.Interface, logger log.Logger) subcollector {
 }
 
 // Collect satisfies subcollector.
-func (j *job) Collect(ch chan<- prometheus.Metric) error {
+func (j *job) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	jobs, err := j.brigadeSVC.GetJobs()
 	if err != nil {
 		return err
@@ -57,26 +59,38 @@ func (j *job) Collect(ch chan<- prometheus.Metric) error {
 
 	for _, job := range jobs {
 		// Info metric.
-		ch <- prometheus.MustNewConstMetric(
+		err := sendMetric(ctx, ch, prometheus.MustNewConstMetric(
 			j.jobInfoDesc,
 			prometheus.GaugeValue,
 			1,
-			job.ID, job.BuildID, job.Name, job.Image)
+			job.ID, job.BuildID, job.Name, job.Image))
+
+		if err != nil {
+			return err
+		}
 
 		// Status metric.
-		ch <- prometheus.MustNewConstMetric(
+		err = sendMetric(ctx, ch, prometheus.MustNewConstMetric(
 			j.jobStatusDesc,
 			prometheus.GaugeValue,
 			1,
-			job.ID, job.Status)
+			job.ID, job.Status))
+
+		if err != nil {
+			return err
+		}
 
 		// Duration metric.
 		// TODO: Think if it's 0 we should send the metric or not.
-		ch <- prometheus.MustNewConstMetric(
+		err = sendMetric(ctx, ch, prometheus.MustNewConstMetric(
 			j.jobDurationDesc,
 			prometheus.GaugeValue,
 			job.Duration.Seconds(),
-			job.ID)
+			job.ID))
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

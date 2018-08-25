@@ -1,6 +1,8 @@
 package collector
 
 import (
+	"context"
+
 	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/slok/brigade-exporter/pkg/log"
@@ -37,7 +39,7 @@ func NewProject(brigadeSVC brigade.Interface, logger log.Logger) subcollector {
 }
 
 // Collect satisfies subcollector.
-func (p *project) Collect(ch chan<- prometheus.Metric) error {
+func (p *project) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 	// Collect project info.
 	prs, err := p.brigadeSVC.GetProjects()
 	if err != nil {
@@ -45,11 +47,15 @@ func (p *project) Collect(ch chan<- prometheus.Metric) error {
 	}
 
 	for _, pr := range prs {
-		ch <- prometheus.MustNewConstMetric(
+		err := sendMetric(ctx, ch, prometheus.MustNewConstMetric(
 			p.projectInfoDesc,
 			prometheus.GaugeValue,
 			1,
-			pr.ID, pr.Name, pr.Repository, pr.Namespace, pr.Worker)
+			pr.ID, pr.Name, pr.Repository, pr.Namespace, pr.Worker))
+
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

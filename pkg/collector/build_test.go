@@ -1,6 +1,7 @@
 package collector_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -107,7 +108,7 @@ func TestBuildSubcollector(t *testing.T) {
 			ch := make(chan prometheus.Metric)
 
 			go func() {
-				clr.Collect(ch)
+				clr.Collect(context.TODO(), ch)
 				close(ch)
 			}()
 

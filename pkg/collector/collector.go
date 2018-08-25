@@ -1,6 +1,8 @@
 package collector
 
 import (
+	"context"
+	"fmt"
 	"sync"
 	"time"
 
@@ -15,7 +17,7 @@ const (
 	namespace = "brigade"
 
 	// Defaults.
-	collectTimeoutDef = 60 * time.Second
+	collectTimeoutDef = 10 * time.Second
 )
 
 // Config is the Exporter configuration.
@@ -111,40 +113,31 @@ func (e *Exporter) Collect(ch chan<- prometheus.Metric) {
 	e.logger.Debugf("starting collect")
 	var wg sync.WaitGroup
 
+	// Create a context with a timeout so long metrics gathers can
+	// be stopped.
+	ctx, cancel := context.WithTimeout(context.Background(), e.cfg.CollectTimeout)
+	defer cancel()
+
 	// Call all the subcollectors.
 	wg.Add(len(e.subcolls))
 	for scName, sc := range e.subcolls {
 		go func(scName string, sc subcollector) {
 			defer wg.Done()
-			e.subcollect(scName, sc, ch)
+			e.subcollect(ctx, scName, sc, ch)
 		}(scName, sc)
 	}
 
-	var wgch = make(chan struct{})
-	go func() {
-		wg.Wait()
-		wgch <- struct{}{}
-	}()
-
-	// Wait to all the subscrapes.
-	select {
-	case <-wgch:
-		// TODO: ok.
-
-	case <-time.After(e.cfg.CollectTimeout):
-		e.logger.Errorf("timeout collecting metrics")
-		// TODO timeout.
-	}
-
+	// Wait for all subscrapes.
+	wg.Wait()
 	e.logger.Debugf("finished collect")
 }
 
-func (e *Exporter) subcollect(scName string, sc subcollector, ch chan<- prometheus.Metric) {
+func (e *Exporter) subcollect(ctx context.Context, scName string, sc subcollector, ch chan<- prometheus.Metric) {
 	logger := e.logger.With("collector", scName)
 	logger.Debugf("starting subcollection")
 
 	startTime := time.Now()
-	err := sc.Collect(ch)
+	err := sc.Collect(ctx, ch)
 
 	var success float64 = 1
 	if err != nil {
@@ -161,5 +154,20 @@ func (e *Exporter) subcollect(scName string, sc subcollector, ch chan<- promethe
 // process failed and.
 type subcollector interface {
 	// Collect will collect and return if the collection has been made successfully.
-	Collect(ch chan<- prometheus.Metric) error
+	Collect(ctx context.Context, ch chan<- prometheus.Metric) error
+}
+
+// sendMetric will send a metric but will check first if the context is active or has been finished.
+// this method will avoid that gourouties continue sending metrics after the gathering process has
+// been finished and avoid leaking background gourotines.
+func sendMetric(ctx context.Context, ch chan<- prometheus.Metric, metric prometheus.Metric) error {
+	select {
+	case <-ctx.Done():
+		ctx.Err()
+		return fmt.Errorf("sending metric after context has been finished: %s", ctx.Err())
+	default:
+	}
+
+	ch <- metric
+	return nil
 }
