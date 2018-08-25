@@ -176,6 +176,49 @@ func TestExporter(t *testing.T) {
 				`brigade_project_info{id="id3",name="Name3",namespace="ns3",repository="repo3",worker="worker3"} 1`,
 			},
 		},
+		{
+			name:     "A timeout in subcollectors should return bad collector success.",
+			projects: testProjects,
+			builds:   testBuilds,
+			jobs:     testJobs,
+			exporterCfg: collector.Config{
+				CollectTimeout: 1, // 1 nanosecond is almost a timeout.
+			},
+			expMetrics: []string{
+				// Exporter metrics.
+				`brigade_exporter_collector_success{collector="projects"} 0`,
+				`brigade_exporter_collector_success{collector="builds"} 0`,
+				`brigade_exporter_collector_success{collector="jobs"} 0`,
+			},
+			notExpMetrics: []string{
+				// Brigade projects metrics.
+				`brigade_project_info{id="id1",name="Name1",namespace="ns1",repository="repo1",worker="worker1"} 1`,
+				`brigade_project_info{id="id2",name="Name2",namespace="ns2",repository="repo2",worker="worker2"} 1`,
+				`brigade_project_info{id="id3",name="Name3",namespace="ns3",repository="repo3",worker="worker3"} 1`,
+
+				// Brigade builds metrics.
+				`brigade_build_info{event_type="deploy",id="id3",project_id="prj3",provider="toilet",version="1234567892"} 1`,
+				`brigade_build_info{event_type="pull_request",id="id2",project_id="prj2",provider="github",version="1234567891"} 1`,
+				`brigade_build_info{event_type="push",id="id1",project_id="prj1",provider="gitlab",version="1234567890"} 1`,
+				`brigade_build_duration_seconds{id="id1"} 125`,
+				`brigade_build_duration_seconds{id="id2"} 340`,
+				`brigade_build_duration_seconds{id="id3"} 18`,
+				`brigade_build_status{id="id1",status="Running"} 1`,
+				`brigade_build_status{id="id2",status="Pending"} 1`,
+				`brigade_build_status{id="id3",status="Failed"} 1`,
+
+				// Brigade Jobs metrics.
+				`brigade_job_info{build_id="bld1",id="id1",image="image1",name="id-name-1"} 1`,
+				`brigade_job_info{build_id="bld2",id="id2",image="image2",name="id-name-2"} 1`,
+				`brigade_job_info{build_id="bld3",id="id3",image="image3",name="id-name-3"} 1`,
+				`brigade_job_duration_seconds{id="id1"} 125`,
+				`brigade_job_duration_seconds{id="id2"} 340`,
+				`brigade_job_duration_seconds{id="id3"} 18`,
+				`brigade_job_status{id="id1",status="Running"} 1`,
+				`brigade_job_status{id="id2",status="Pending"} 1`,
+				`brigade_job_status{id="id3",status="Failed"} 1`,
+			},
+		},
 	}
 
 	for _, test := range tests {
