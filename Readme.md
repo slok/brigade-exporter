@@ -13,11 +13,13 @@ There is already a docker image ready to run the exporter in `slok/brigade-expor
 If you want to tests the exporter outside the cluster in a brigade installation you ca use `--development` flag. You will need kubectl configuration and the context to the correct cluster set.
 
 ```bash
-docker run --rm -it -p 9418:9418 slok/brigade-exporter \
+docker run --rm -it -p 9477:9477 slok/brigade-exporter \
     --debug \
     --development \
     --namespace ${MY_BRIGADE_NAMESPACE}
 ```
+
+go to http://127.0.0.1:9477/metrics
 
 ### Run in fake mode
 
