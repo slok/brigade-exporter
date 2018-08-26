@@ -73,20 +73,12 @@ func (m *Main) Run() error {
 	// Exporter.
 	{
 		// Prepare Services.
-		var brigadeSVC brigade.Interface
-		if m.flags.fake {
-			brigadeSVC = brigade.NewFake()
-			m.logger.Warnf("exporter running in faked mode")
-		} else {
-			k8scli, err := m.createKubernetesClient()
-			if err != nil {
-				return err
-			}
-			brigadeCli := azurebrigade.New(k8scli, m.flags.namespace)
-			brigadeSVC = brigade.New(brigadeCli, m.logger)
+		brigadeSVC, err := m.createBrigadeService()
+		if err != nil {
+			return err
 		}
 
-		// Prepare collector.
+		// Prepare exporter.
 		cfg := collector.Config{
 			DisableProjects: m.flags.disableProjectCollector,
 			DisableBuilds:   m.flags.disableBuildCollector,
@@ -95,24 +87,7 @@ func (m *Main) Run() error {
 		clr := collector.NewExporter(cfg, brigadeSVC, m.logger)
 		promReg := prometheus.NewRegistry()
 		promReg.MustRegister(clr)
-
-		// Prepare server
-		h := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{})
-		mux := http.NewServeMux()
-		mux.Handle(m.flags.metricsPath, h)
-		s := http.Server{
-			Handler: mux,
-			Addr:    m.flags.listenAddress,
-		}
-		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte(`<html>
-			<head><title>Brigade Exporter</title></head>
-			<body>
-			<h1>Brigade Exporter</h1>
-			<p><a href="` + m.flags.metricsPath + `">Metrics</a></p>
-			</body>
-			</html>`))
-		})
+		s := m.createHTTPServer(promReg)
 
 		g.Add(
 			func() error {
@@ -120,6 +95,7 @@ func (m *Main) Run() error {
 				return s.ListenAndServe()
 			},
 			func(error) {
+				m.logger.Infof("draining connections")
 				ctx, _ := context.WithTimeout(context.Background(), gracePeriod)
 				if err := s.Shutdown(ctx); err != nil {
 					m.logger.Errorf("error while draining connections: %s", err)
@@ -130,6 +106,21 @@ func (m *Main) Run() error {
 	}
 
 	return g.Run()
+}
+
+// createBrigadeService will create the proper brigade service based on the required flags.
+func (m *Main) createBrigadeService() (brigade.Interface, error) {
+	if m.flags.fake {
+		m.logger.Warnf("exporter running in faked mode")
+		return brigade.NewFake(), nil
+	}
+
+	k8scli, err := m.createKubernetesClient()
+	if err != nil {
+		return nil, err
+	}
+	brigadeCli := azurebrigade.New(k8scli, m.flags.namespace)
+	return brigade.New(brigadeCli, m.logger), nil
 }
 
 // loadKubernetesConfig loads kubernetes configuration based on flags.
@@ -153,6 +144,7 @@ func (m *Main) loadKubernetesConfig() (*rest.Config, error) {
 	return cfg, nil
 }
 
+// createKubernetesClient will create the proper kubernetes client.
 func (m *Main) createKubernetesClient() (kubernetes.Interface, error) {
 	config, err := m.loadKubernetesConfig()
 	if err != nil {
@@ -160,6 +152,27 @@ func (m *Main) createKubernetesClient() (kubernetes.Interface, error) {
 	}
 
 	return kubernetes.NewForConfig(config)
+}
+
+// createHTTPServer creates the http server that serves prometheus metrics.
+func (m *Main) createHTTPServer(promReg *prometheus.Registry) http.Server {
+	h := promhttp.HandlerFor(promReg, promhttp.HandlerOpts{})
+	mux := http.NewServeMux()
+	mux.Handle(m.flags.metricsPath, h)
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte(`<html>
+			<head><title>Brigade Exporter</title></head>
+			<body>
+			<h1>Brigade Exporter</h1>
+			<p><a href="` + m.flags.metricsPath + `">Metrics</a></p>
+			</body>
+			</html>`))
+	})
+
+	return http.Server{
+		Handler: mux,
+		Addr:    m.flags.listenAddress,
+	}
 }
 
 // printVersion prints the version of the app.
