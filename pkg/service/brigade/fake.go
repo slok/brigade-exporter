@@ -38,16 +38,24 @@ func (f *fake) GetProjects() ([]*Project, error) {
 func (f *fake) GetBuilds() ([]*Build, error) {
 	var blds []*Build
 
+	// With this ID we make it change every 10m
+	startID := int(time.Now().Unix() / 600)
+	// Change Status every 120m.
+	statusSalt := (time.Now().Unix() / 120)
+
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {
+			fakeIdentity := i + j
+			statusRand := statusSalt * int64(j*i)
+
 			blds = append(blds, &Build{
-				ID:        fmt.Sprintf("build-id-%d%d", i, j),
+				ID:        fmt.Sprintf("build-id-%d%d%d", startID, i, j),
 				ProjectID: fmt.Sprintf("prj-id-%d", i),
-				Type:      fakedBuildEventTypes[time.Now().UnixNano()%int64(len(fakedBuildEventTypes))],
-				Provider:  fakedBuildProviders[time.Now().UnixNano()%int64(len(fakedBuildProviders))],
-				Version:   fmt.Sprintf("%d", time.Now().UnixNano()),
-				Status:    fakedJobStatus[time.Now().UnixNano()%int64(len(fakedJobStatus))].String(),
-				Duration:  time.Duration(time.Now().UnixNano()%4000) * time.Second,
+				Type:      fakedBuildEventTypes[(22*startID*fakeIdentity)%len(fakedBuildEventTypes)],
+				Provider:  fakedBuildProviders[(23*startID*fakeIdentity)%len(fakedBuildProviders)],
+				Version:   fmt.Sprintf("%d", (1234567 * startID * fakeIdentity)),
+				Status:    fakedJobStatus[statusRand%int64(len(fakedJobStatus))].String(),
+				Duration:  time.Duration((startID*fakeIdentity)%4000) * time.Second,
 			})
 
 		}
@@ -58,15 +66,21 @@ func (f *fake) GetBuilds() ([]*Build, error) {
 func (f *fake) GetJobs() ([]*Job, error) {
 	var jobs []*Job
 
+	// With this ID we make it change every 10m
+	startID := time.Now().Unix() / 600
+	// Change Status every 120m.
+	statusSalt := (time.Now().Unix() / 120)
+
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {
+			statusRand := statusSalt * int64(j*i)
 			jobs = append(jobs, &Job{
-				ID:       fmt.Sprintf("job-id-%d%d%d", i, j, i),
-				Name:     fmt.Sprintf("job-%d%d%d", i, j, i),
-				BuildID:  fmt.Sprintf("build-id-%d%d", i, j),
+				ID:       fmt.Sprintf("job-id-%d%d%d", startID, j, i),
+				Name:     fmt.Sprintf("job-%d%d%d", startID, j, i),
+				BuildID:  fmt.Sprintf("build-id-%d%d%d", startID, i, j),
 				Image:    fmt.Sprintf("fake/job-image:%d%d", i, j),
-				Status:   fakedJobStatus[time.Now().UnixNano()%int64(len(fakedJobStatus))].String(),
-				Duration: time.Duration(time.Now().UnixNano()%4000) * time.Second,
+				Status:   fakedJobStatus[statusRand%int64(len(fakedJobStatus))].String(),
+				Duration: time.Duration((987654321*startID)%4000) * time.Second,
 			})
 		}
 	}
