@@ -10,6 +10,9 @@ SHELL := $(shell which bash)
 # Get docker path or an empty string
 DOCKER := $(shell command -v docker)
 
+# Get docker-compose path or an empty string
+DOCKER_COMPOSE := $(shell command -v docker-compose)
+
 # Get the main unix group for the user running make (to be used by docker-compose later)
 GID := $(shell id -g)
 
@@ -18,6 +21,9 @@ UID := $(shell id -u)
 
 # Version from Git.
 VERSION=$(shell git describe --tags --always)
+
+# Dev direcotry has all the required dev files.
+DEV_DIR := ./docker/dev
 
 # cmds
 UNIT_TEST_CMD := ./hack/scripts/unit-test.sh
@@ -45,16 +51,23 @@ ifndef DOCKER
 	@echo "Docker is not available. Please install docker"
 	@exit 1
 endif
+ifndef DOCKER_COMPOSE
+	@echo "docker-compose is not available. Please install docker-compose"
+	@exit 1
+endif
 
 # Build the development docker images
 .PHONY: build
 build:
-	docker build -t $(SERVICE_NAME) --build-arg uid=$(UID) --build-arg  gid=$(GID) -f ./docker/dev/Dockerfile .
+	docker build -t $(SERVICE_NAME) --build-arg uid=$(UID) --build-arg  gid=$(GID) -f $(DEV_DIR)/Dockerfile .
 
-# Shell the development docker image
-.PHONY: build
-shell: build
-	$(DOCKER_RUN_CMD) /bin/bash
+# run the development stack.
+.PHONY: shell
+stack: deps-development
+	cd $(DEV_DIR) && \
+    ( docker-compose -p $(SERVICE_NAME) up --build; \
+      docker-compose -p $(SERVICE_NAME) stop; \
+      docker-compose -p $(SERVICE_NAME) rm -f; )
 
 # Build production stuff.
 build-binary:

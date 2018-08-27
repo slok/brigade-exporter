@@ -10,7 +10,7 @@ There is already a docker image ready to run the exporter in `slok/brigade-expor
 
 ### Run outside the cluster
 
-If you want to tests the exporter outside the cluster in a brigade installation you ca use `--development` flag. You will need kubectl configuration and the context to the correct cluster set.
+If you want to test the exporter outside the cluster in a brigade installation, you can use `--development` flag. You will need kubectl configuration and the context set pointing to the desired cluster.
 
 ```bash
 docker run --rm -it -p 9477:9477 slok/brigade-exporter \
@@ -23,7 +23,17 @@ go to http://127.0.0.1:9477/metrics
 
 ### Run in fake mode
 
-If you are developing the exporter can fake a brigade installation and return fake data using `--fake` flag. This is very handy to develop.
+If you are developing, the exporter can fake a brigade installation and return fake data using `--fake` flag.
+
+### Run the stack with a configured Prometheus
+
+If you want to run a local exporter+prometheus stack run.
+
+```bash
+make stack
+```
+
+And you will have a prometheus on http://127.0.0.1:9090 that will scrape a faked brigade-exporter.
 
 ## Deployment
 
