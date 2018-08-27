@@ -32,8 +32,8 @@ type flags struct {
 	version                 bool
 }
 
-// NewFlags returns a new flags object.
-func NewFlags() *flags {
+// newFlags returns a new flags object.
+func newFlags() *flags {
 	f := &flags{
 		fs: flag.NewFlagSet(os.Args[0], flag.ExitOnError),
 	}

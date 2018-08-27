@@ -182,7 +182,7 @@ func (m *Main) printVersion() {
 
 func main() {
 	m := &Main{
-		flags: NewFlags(),
+		flags: newFlags(),
 	}
 
 	if err := m.Run(); err != nil {
