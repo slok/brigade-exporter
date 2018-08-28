@@ -73,15 +73,17 @@ func (f *fake) GetJobs() ([]*Job, error) {
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {
-			statusRand := statusSalt * int64(j*i)
-			jobs = append(jobs, &Job{
-				ID:       fmt.Sprintf("job-id-%d%d%d", startID, j, i),
-				Name:     fmt.Sprintf("job-%d%d%d", startID, j, i),
-				BuildID:  fmt.Sprintf("build-id-%d%d%d", startID, i, j),
-				Image:    fmt.Sprintf("fake/job-image:%d%d", i, j),
-				Status:   fakedJobStatus[statusRand%int64(len(fakedJobStatus))].String(),
-				Duration: time.Duration((987654321*startID)%4000) * time.Second,
-			})
+			for k := 0; k < 15; k++ {
+				statusRand := statusSalt * int64(j*i*k)
+				jobs = append(jobs, &Job{
+					ID:       fmt.Sprintf("job-id-%d%d%d%d", startID, j, i, k),
+					Name:     fmt.Sprintf("job-%d%d%d%d", startID, j, i, k),
+					BuildID:  fmt.Sprintf("build-id-%d%d%d", startID, i, j),
+					Image:    fmt.Sprintf("fake/job-image:%d%d", i, j),
+					Status:   fakedJobStatus[statusRand%int64(len(fakedJobStatus))].String(),
+					Duration: time.Duration((987654321*startID)%4000) * time.Second,
+				})
+			}
 		}
 	}
 	return jobs, nil

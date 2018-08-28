@@ -98,4 +98,42 @@ make build-image
 
 to build the image.
 
+## Query examples
+
+% of running builds per provider.
+
+```text
+sum(
+    brigade_build_status{status="Running"} * on(id) group_right brigade_build_info
+) by (provider)
+/ on() group_left
+sum(
+    brigade_build_status{status="Running"})
+* 100
+```
+
+Get the jobs and their states of a build
+
+```text
+brigade_job_info{build_id="build-xxxx"}
+*on(id) group_right brigade_job_status
+```
+
+Average job duration seconds per project
+**Note This is an extreme example of how you owuld scalate IDs in metrics. This is not recommended.**
+
+```text
+avg(
+label_replace(
+    label_replace(
+      avg(
+        (brigade_job_duration_seconds > 0) * on(id) group_right brigade_job_info
+      ) by (build_id)
+    , "id", "$1", "build_id", "(.*)")
+    * on(id) group_right brigade_build_info
+, "id", "$1", "project_id", "(.*)")
+) by (id)
+* on(id) group_right brigade_project_info
+```
+
 [brigade]: https://brigade.sh
