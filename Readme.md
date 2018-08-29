@@ -68,11 +68,13 @@ TODO
 
 ### Job metrics
 
-| Metric                       | Type  | Meaning                         | Labels                    |
-| ---------------------------- | ----- | ------------------------------- | ------------------------- |
-| brigade_job_info             | gauge | Brigade job information         | id, build_id, image, name |
-| brigade_job_status           | gauge | Brigade job status              | id, status                |
-| brigade_job_duration_seconds | gauge | Brigade job duration in seconds | id                        |
+| Metric                          | Type  | Meaning                                     | Labels                    |
+| ------------------------------- | ----- | ------------------------------------------- | ------------------------- |
+| brigade_job_info                | gauge | Brigade job information                     | id, build_id, image, name |
+| brigade_job_status              | gauge | Brigade job status                          | id, status                |
+| brigade_job_duration_seconds    | gauge | Brigade job duration in seconds             | id                        |
+| brigade_job_create_time_seconds | gauge | Brigade job creation time in unix timestamp | id                        |
+| brigade_job_start_time_seconds  | gauge | Brigade job start time in unix timestamp    | id                        |
 
 ### Disabling metrics
 
@@ -117,6 +119,12 @@ Get the jobs and their states of a build
 ```text
 brigade_job_info{build_id="build-xxxx"}
 *on(id) group_right brigade_job_status
+```
+
+Get how long the jobs have been in pending state before started to run.
+
+```text
+(brigade_job_start_time_seconds > 0) - (brigade_job_create_time_seconds > 0)
 ```
 
 Average job duration seconds per project

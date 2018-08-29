@@ -31,4 +31,6 @@ type Job struct {
 	Image    string
 	Status   string
 	Duration time.Duration
+	Creation time.Time
+	Start    time.Time
 }

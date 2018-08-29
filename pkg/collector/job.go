@@ -2,6 +2,7 @@ package collector
 
 import (
 	"context"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -24,6 +25,8 @@ type job struct {
 	jobInfoDesc     *prometheus.Desc
 	jobStatusDesc   *prometheus.Desc
 	jobDurationDesc *prometheus.Desc
+	jobCreationDesc *prometheus.Desc
+	jobStartDesc    *prometheus.Desc
 }
 
 // NewJob returns a new job subcollector.
@@ -45,6 +48,16 @@ func NewJob(brigadeSVC brigade.Interface, logger log.Logger) subcollector {
 		jobDurationDesc: prometheus.NewDesc(
 			prometheus.BuildFQName(namespace, jobSubSystem, "duration_seconds"),
 			"Brigade job duration in seconds.",
+			[]string{"id"}, nil,
+		),
+		jobCreationDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, jobSubSystem, "create_time_seconds"),
+			"Brigade job creation time in unix timestamp.",
+			[]string{"id"}, nil,
+		),
+		jobStartDesc: prometheus.NewDesc(
+			prometheus.BuildFQName(namespace, jobSubSystem, "start_time_seconds"),
+			"Brigade job start time in unix timestamp.",
 			[]string{"id"}, nil,
 		),
 	}
@@ -91,7 +104,36 @@ func (j *job) Collect(ctx context.Context, ch chan<- prometheus.Metric) error {
 		if err != nil {
 			return err
 		}
+
+		// creation and start metrics.
+		// TODO: Think if it's `time.IsZero`` we should send the metric or not.
+		err = sendMetric(ctx, ch, prometheus.MustNewConstMetric(
+			j.jobCreationDesc,
+			prometheus.GaugeValue,
+			j.getUnix(job.Creation),
+			job.ID))
+
+		if err != nil {
+			return err
+		}
+
+		err = sendMetric(ctx, ch, prometheus.MustNewConstMetric(
+			j.jobStartDesc,
+			prometheus.GaugeValue,
+			j.getUnix(job.Start),
+			job.ID))
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func (*job) getUnix(t time.Time) float64 {
+	if t.IsZero() {
+		return 0
+	}
+
+	return float64(t.Unix())
 }

@@ -40,7 +40,7 @@ func (f *fake) GetBuilds() ([]*Build, error) {
 
 	// With this ID we make it change every 10m
 	startID := int(time.Now().Unix() / 600)
-	// Change Status every 120m.
+	// Change Status every 2m.
 	statusSalt := (time.Now().Unix() / 120)
 
 	for i := 0; i < 10; i++ {
@@ -68,13 +68,23 @@ func (f *fake) GetJobs() ([]*Job, error) {
 
 	// With this ID we make it change every 10m
 	startID := time.Now().Unix() / 600
-	// Change Status every 120m.
-	statusSalt := (time.Now().Unix() / 120)
+	// Change Status every 55s.
+	statusSalt := (time.Now().Unix() / 55)
 
 	for i := 0; i < 10; i++ {
 		for j := 0; j < 10; j++ {
-			for k := 0; k < 15; k++ {
+			jobN := 15 - j
+
+			for k := 0; k < jobN; k++ {
 				statusRand := statusSalt * int64(j*i*k)
+
+				// Make jobs status different from builds status.
+				if (i+j+k)%2 == 0 {
+					statusRand = statusRand + int64(j*i*k)
+				} else {
+					statusRand = statusRand - int64(j*i*k)
+				}
+
 				jobs = append(jobs, &Job{
 					ID:       fmt.Sprintf("job-id-%d%d%d%d", startID, j, i, k),
 					Name:     fmt.Sprintf("job-%d%d%d%d", startID, j, i, k),
@@ -82,6 +92,8 @@ func (f *fake) GetJobs() ([]*Job, error) {
 					Image:    fmt.Sprintf("fake/job-image:%d%d", i, j),
 					Status:   fakedJobStatus[statusRand%int64(len(fakedJobStatus))].String(),
 					Duration: time.Duration((987654321*startID)%4000) * time.Second,
+					Creation: time.Unix(startID, 0).Add(time.Second * time.Duration(j*i*k)),
+					Start:    time.Unix(startID, 0).Add(time.Second * time.Duration(j*i*k*2)),
 				})
 			}
 		}

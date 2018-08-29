@@ -125,7 +125,6 @@ func (b *brigade) GetJobs() ([]*Job, error) {
 			if job == nil {
 				continue
 			}
-
 			jobs = append(jobs, &Job{
 				ID:       job.ID,
 				BuildID:  bld.ID,
@@ -133,6 +132,8 @@ func (b *brigade) GetJobs() ([]*Job, error) {
 				Image:    job.Image,
 				Status:   job.Status.String(),
 				Duration: b.getJobDuration(job),
+				Creation: job.CreationTime,
+				Start:    job.StartTime,
 			})
 		}
 

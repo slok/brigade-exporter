@@ -1,6 +1,7 @@
 package collector_test
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -18,6 +19,11 @@ import (
 )
 
 var (
+	t1 = time.Now()
+	t2 = t1.Add(265 * time.Second)
+	t3 = t2.Add(12 * time.Minute)
+	t4 = t3.Add(1 * time.Hour)
+
 	testProjects = []*brigade.Project{
 		&brigade.Project{ID: "id1", Name: "Name1", Repository: "repo1", Namespace: "ns1", Worker: "worker1"},
 		&brigade.Project{ID: "id2", Name: "Name2", Repository: "repo2", Namespace: "ns2", Worker: "worker2"},
@@ -29,13 +35,14 @@ var (
 		&brigade.Build{ID: "id3", ProjectID: "prj3", Type: "deploy", Provider: "toilet", Version: "1234567892", Status: "Failed", Duration: 18 * time.Second},
 	}
 	testJobs = []*brigade.Job{
-		&brigade.Job{ID: "id1", BuildID: "bld1", Name: "id-name-1", Image: "image1", Status: "Running", Duration: 125 * time.Second},
-		&brigade.Job{ID: "id2", BuildID: "bld2", Name: "id-name-2", Image: "image2", Status: "Pending", Duration: 340 * time.Second},
+		&brigade.Job{ID: "id1", BuildID: "bld1", Name: "id-name-1", Image: "image1", Status: "Running", Duration: 125 * time.Second, Creation: t1, Start: t2},
+		&brigade.Job{ID: "id2", BuildID: "bld2", Name: "id-name-2", Image: "image2", Status: "Pending", Duration: 340 * time.Second, Creation: t2, Start: t3},
 		&brigade.Job{ID: "id3", BuildID: "bld3", Name: "id-name-3", Image: "image3", Status: "Failed", Duration: 18 * time.Second},
 	}
 )
 
 func TestExporter(t *testing.T) {
+
 	tests := []struct {
 		name          string
 		exporterCfg   collector.Config
@@ -82,6 +89,12 @@ func TestExporter(t *testing.T) {
 				`brigade_job_status{id="id1",status="Running"} 1`,
 				`brigade_job_status{id="id2",status="Pending"} 1`,
 				`brigade_job_status{id="id3",status="Failed"} 1`,
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id1"}`, t1),
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id2"}`, t2),
+				`brigade_job_create_time_seconds{id="id3"} 0`,
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id1"}`, t2),
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id2"}`, t3),
+				`brigade_job_start_time_seconds{id="id3"} 0`,
 			},
 			notExpMetrics: []string{},
 		},
@@ -129,6 +142,12 @@ func TestExporter(t *testing.T) {
 				`brigade_job_status{id="id1",status="Running"} 1`,
 				`brigade_job_status{id="id2",status="Pending"} 1`,
 				`brigade_job_status{id="id3",status="Failed"} 1`,
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id1"}`, t1),
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id2"}`, t2),
+				`brigade_job_create_time_seconds{id="id3"} 0`,
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id1"}`, t2),
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id2"}`, t3),
+				`brigade_job_start_time_seconds{id="id3"} 0`,
 			},
 		},
 		{
@@ -165,6 +184,12 @@ func TestExporter(t *testing.T) {
 				`brigade_job_status{id="id1",status="Running"} 1`,
 				`brigade_job_status{id="id2",status="Pending"} 1`,
 				`brigade_job_status{id="id3",status="Failed"} 1`,
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id1"}`, t1),
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id2"}`, t2),
+				`brigade_job_create_time_seconds{id="id3"} 0`,
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id1"}`, t2),
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id2"}`, t3),
+				`brigade_job_start_time_seconds{id="id3"} 0`,
 			},
 			notExpMetrics: []string{
 				// Exporter metrics.
@@ -217,6 +242,12 @@ func TestExporter(t *testing.T) {
 				`brigade_job_status{id="id1",status="Running"} 1`,
 				`brigade_job_status{id="id2",status="Pending"} 1`,
 				`brigade_job_status{id="id3",status="Failed"} 1`,
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id1"}`, t1),
+				getUnixTimeMetric(`brigade_job_create_time_seconds{id="id2"}`, t2),
+				`brigade_job_create_time_seconds{id="id3"} 0`,
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id1"}`, t2),
+				getUnixTimeMetric(`brigade_job_start_time_seconds{id="id2"}`, t3),
+				`brigade_job_start_time_seconds{id="id3"} 0`,
 			},
 		},
 	}
@@ -259,4 +290,8 @@ func TestExporter(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getUnixTimeMetric(metric string, t time.Time) string {
+	return fmt.Sprintf(`%s %g`, metric, float64(t.Unix()))
 }
