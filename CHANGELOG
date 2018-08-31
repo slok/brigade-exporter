@@ -1,0 +1,6 @@
+## 0.x.x / 2018-xx-xx
+
+* [FEATURE] Add Add job collector with the initial metrics.
+* [FEATURE] Add Add build collector with the initial metrics.
+* [FEATURE] Add Add project collector with the initial metrics.
+* [FEATURE] Add exporter main logic.
