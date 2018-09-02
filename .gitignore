@@ -12,3 +12,6 @@
 
 # Binary
 bin/
+
+# Vendor
+vendor/

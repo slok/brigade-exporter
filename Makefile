@@ -26,16 +26,23 @@ VERSION=$(shell git describe --tags --always)
 DEV_DIR := ./docker/dev
 
 # cmds
+VENDOR_CMD := go mod vendor
 UNIT_TEST_CMD := ./hack/scripts/unit-test.sh
 INTEGRATION_TEST_CMD := ./hack/scripts/integration-test.sh
 MOCKS_CMD := ./hack/scripts/mockgen.sh
-DOCKER_RUN_CMD := docker run -v ${PWD}:$(DOCKER_GO_SERVICE_PATH) --rm -it $(SERVICE_NAME)
+DOCKER_RUN_CMD := $(VENDOR_CMD) && docker run -v ${PWD}:$(DOCKER_GO_SERVICE_PATH) --rm -it $(SERVICE_NAME)
 BUILD_BINARY_CMD := VERSION=${VERSION} ./hack/scripts/build-binary.sh
 BUILD_IMAGE_CMD := VERSION=${VERSION} ./hack/scripts/build-image.sh
 DEP_ENSURE_CMD := dep ensure
 DEBUG_CMD := go run ./cmd/brigade-exporter/* --debug
 DEV_CMD := $(DEBUG_CMD) --development
 FAKE_CMD := $(DEV_CMD) --fake
+K8S_VERSION := "1.10.7"
+SET_K8S_DEPS_CMD := go mod edit \
+	-require=k8s.io/client-go@kubernetes-${K8S_VERSION} \
+	-require=k8s.io/apimachinery@kubernetes-${K8S_VERSION} \
+	-require=k8s.io/api@kubernetes-${K8S_VERSION} && \
+	go mod tidy
 
 # environment dirs
 DEV_DIR := docker/dev
@@ -77,12 +84,24 @@ build-binary:
 build-image:
 	$(BUILD_IMAGE_CMD)
 
+# Dependencies stuff.
+.PHONY: set-k8s-deps
+set-k8s-deps:
+	$(SET_K8S_DEPS_CMD)
+
+# Vendor is used to cache dependencies to execute commands on 
+# docker containers and they don't need to get the dependencies
+# on each of the commands.
+.PHONY: vendor
+vendor: 
+	$(VENDOR_CMD)
+
 # Test stuff in dev
 .PHONY: unit-test
-unit-test: build
+unit-test: build vendor
 	$(DOCKER_RUN_CMD) /bin/sh -c '$(UNIT_TEST_CMD)'
 .PHONY: integration-test
-integration-test: build
+integration-test: build vendor
 	$(DOCKER_RUN_CMD) /bin/sh -c '$(INTEGRATION_TEST_CMD)'
 .PHONY: test
 test: integration-test

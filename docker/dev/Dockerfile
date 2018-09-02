@@ -1,4 +1,4 @@
-FROM golang:1.10-alpine
+FROM golang:1.11-alpine
 
 RUN apk --no-cache add \
     g++ \
@@ -17,4 +17,6 @@ RUN addgroup -g $gid app && \
 
 
 USER app
+# Although we are using go 1.11 we set here in order to allow vendor directory
+# work as a cache.
 WORKDIR /go/src/github.com/slok/brigade-exporter
