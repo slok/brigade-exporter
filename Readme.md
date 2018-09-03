@@ -1,4 +1,4 @@
-# brigade-exporter
+# brigade-exporter [![Build Status][travis-image]][travis-url] [![Go Report Card][goreport-image]][goreport-url] [![docker image][quay-image]][quay-url]
 
 brigade-exporter is a Prometheus metrics exporter for [Brigade].
 
@@ -6,14 +6,17 @@ This exporter is designed to be run along with a brigade installation, if you ha
 
 ## Run
 
-There is already a docker image ready to run the exporter in `slok/brigade-exporter`. It has different options to run.
+There is already a docker image ready to run the exporter in `quay.io/slok/brigade-exporter`. It has different options to run.
 
 ### Run outside the cluster
 
 If you want to test the exporter outside the cluster in a brigade installation, you can use `--development` flag. You will need kubectl configuration and the context set pointing to the desired cluster.
 
 ```bash
-docker run --rm -it -p 9480:9480 slok/brigade-exporter \
+docker run --rm \
+    -p 9480:9480 \
+    -v ${HOME}/.kube:/root/.kube:ro \
+    quay.io/slok/brigade-exporter:latest \
     --debug \
     --development \
     --namespace ${MY_BRIGADE_NAMESPACE}
@@ -163,3 +166,9 @@ label_replace(
 ```
 
 [brigade]: https://brigade.sh
+[travis-image]: https://travis-ci.org/slok/brigade-exporter.svg?branch=master
+[travis-url]: https://travis-ci.org/slok/brigade-exporter
+[goreport-image]: https://goreportcard.com/badge/github.com/slok/brigade-exporter
+[goreport-url]: https://goreportcard.com/report/github.com/slok/brigade-exporter
+[quay-image]: https://quay.io/repository/slok/brigade-exporter/status
+[quay-url]: https://quay.io/repository/slok/brigade-exporter
