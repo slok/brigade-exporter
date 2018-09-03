@@ -1,0 +1,32 @@
+language: golang
+sudo: required
+services:
+  - docker
+
+before_install:
+  # Upgrade default docker-compose
+  - sudo rm -f /usr/local/bin/docker-compose
+  - curl -L https://github.com/docker/compose/releases/download/${DOCKER_COMPOSE_VERSION}/docker-compose-`uname -s`-`uname -m` > docker-compose
+  - chmod +x docker-compose
+  - sudo mv docker-compose /usr/local/bin
+  # Upgrade default docker
+  - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  - sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+  - sudo apt-get update
+  - sudo apt-get -y install docker-ce
+
+script:
+  - make test
+
+deploy:
+  - provider: script
+    script: docker login -u="${DOCKER_USER}" -p="${DOCKER_PASSWORD}" quay.io && make push
+    on:
+      tags: true
+
+env:
+  global:
+    - DOCKER_COMPOSE_VERSION: 1.22.0
+    - DOCKER_USER: slok+brigadeexporter
+    # DOCKER_PASSWORD
+    - secure: "I9P7O/jX20FxqIXzgsREXQan8B2/iUxOcXOSZwnyKQbHZzk34Z9OGQbzeJ3nstcybNbkwMawKwO4dCivOKcfSP0AkttFnV0oUl01VHm0WFdjpq/4D4ptI5nxzCuewt6p5LmAyt+rQ7nsQidS6R8NAvhP1fLd/m1k2qeN73fBHHB7LzG29OVqYs1W+nkfeiLWRwNpv8hBFOb9/YZljRwWIWYsAYnGA2eNZW1x0m/m1r5fBoK1QBGMefTtGSC9dni8C+y7j5v0YcH/jvf24Rt5GJkjZwRb2Q+o6XXTdrujGpeR6DgkIGU5sJTf076NK2saluYamrx3a1E1adujIl6b2WGybqPdWWjpKBvubjYF/W2lThQh1YWEX+ZGQhuOecbxnbb2mjPA6zlspT2kBLIlVoSFXdiyBXtqkg9sS6hWV5zSvLx3azNsAwjJMpG1BoHMeTAH+iamT+uSNl8p098fNP7NftuN5fBmhKTDBi+DveFwuY2J/1RWXy+LAiSgiqAnhbG+Mv2U2kk0BTW2FLQ/rPn445W2qT64Jf4bOJJcQdyatWeKNFXEBqhAc8hMhrzX7PBfcDAouydWY0ZcBaOJKxOX8jwW7VgLMyEHyE8Fyd445SbfEMY8EZonPppdBQhQbe731Tja++LrsEg/artvNoeaGt3vZwZ4dCZQdqn3ho0="
