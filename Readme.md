@@ -24,7 +24,9 @@ docker run --rm \
 
 go to http://127.0.0.1:9480/metrics
 
-## Example dashboard
+## Grafana dashboard
+
+- [Brigade dashboard][brigade-dashboard]: A grafana dashboard for brigade.
 
 ![grafana brigade dashboard](img/brigade-dashboard.png)
 
@@ -172,3 +174,4 @@ label_replace(
 [goreport-url]: https://goreportcard.com/report/github.com/slok/brigade-exporter
 [quay-image]: https://quay.io/repository/slok/brigade-exporter/status
 [quay-url]: https://quay.io/repository/slok/brigade-exporter
+[brigade-dashboard]: https://grafana.com/dashboards/7800
