@@ -9,7 +9,7 @@ services:
     volumes:
       - ../../:/go/src/github.com/slok/brigade-exporter
     ports:
-      - 9477
+      - 9480
 
   prometheus:
     image: prom/prometheus

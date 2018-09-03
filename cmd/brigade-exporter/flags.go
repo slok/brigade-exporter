@@ -10,7 +10,7 @@ import (
 
 // Defaults.
 const (
-	listenAddrDef  = ":9477"
+	listenAddrDef  = ":9480"
 	metricsPathDef = "/metrics"
 	namespaceDef   = "default"
 )
