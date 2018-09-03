@@ -21,19 +21,9 @@ docker run --rm -it -p 9480:9480 slok/brigade-exporter \
 
 go to http://127.0.0.1:9480/metrics
 
-### Run in fake mode
+## Example dashboard
 
-If you are developing, the exporter can fake a brigade installation and return fake data using `--fake` flag.
-
-### Run the stack with a configured Prometheus
-
-If you want to run a local exporter+prometheus stack run.
-
-```bash
-make stack
-```
-
-And you will have a prometheus on http://127.0.0.1:9090 that will scrape a faked brigade-exporter.
+![grafana brigade dashboard](img/brigade-dashboard.png)
 
 ## Deployment
 
@@ -99,6 +89,22 @@ make build-image
 ```
 
 to build the image.
+
+## Development
+
+### Run in fake mode
+
+If you are developing, the exporter can fake a brigade installation and return fake data using `--fake` flag.
+
+### Run the stack with a configured Prometheus
+
+If you want to run a local exporter+prometheus stack run.
+
+```bash
+make stack
+```
+
+And you will have a prometheus on http://127.0.0.1:9090 that will scrape a faked brigade-exporter.
 
 ## Query examples
 
