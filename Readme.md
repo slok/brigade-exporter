@@ -132,12 +132,11 @@ Get the top 10 project builds duration by event and provider (in the last 30m)
 ```text
 topk(10,
   avg(
-    label_replace(
-      max_over_time(brigade_build_duration_seconds[30m])
-       * on(id) group_right brigade_build_info
-    , "id", "$1", "project_id", "(.*)")
-  * on(id) group_left brigade_project_info
-) by (id, provider, event_type))
+    max_over_time(brigade_build_duration_seconds[30m])
+      * on(id) group_right brigade_build_info
+    * on(project_id) group_left(name)
+      label_replace(brigade_project_info , "project_id", "$1", "id", "(.*)")
+  ) by(name, provider, event_type))
 ```
 
 Average job duration seconds per project
