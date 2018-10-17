@@ -7,7 +7,7 @@ RUN apk --no-cache add \
 
 ARG VERSION
 ENV VERSION=${VERSION}
-WORKDIR /go/src/github.com/slok/brigade-exporter
+WORKDIR /src
 COPY . .
 RUN ./hack/scripts/build-binary.sh
 
@@ -15,6 +15,6 @@ RUN ./hack/scripts/build-binary.sh
 FROM alpine:latest
 RUN apk --no-cache add \
   ca-certificates
-COPY --from=build-stage /go/src/github.com/slok/brigade-exporter/bin/brigade-exporter /usr/local/bin/brigade-exporter
+COPY --from=build-stage /src/bin/brigade-exporter /usr/local/bin/brigade-exporter
 ENTRYPOINT ["/usr/local/bin/brigade-exporter"]
 
