@@ -2,7 +2,7 @@
 SERVICE_NAME := brigade-exporter
 
 # Path of the go service inside docker
-DOCKER_GO_SERVICE_PATH := /go/src/github.com/slok/brigade-exporter
+DOCKER_GO_SERVICE_PATH := /src
 
 # Shell to use for running scripts
 SHELL := $(shell which bash)
@@ -26,14 +26,13 @@ VERSION=$(shell git describe --tags --always)
 DEV_DIR := ./docker/dev
 
 # cmds
-VENDOR_CMD := go mod vendor
 UNIT_TEST_CMD := ./hack/scripts/unit-test.sh
 INTEGRATION_TEST_CMD := ./hack/scripts/integration-test.sh
 MOCKS_CMD := ./hack/scripts/mockgen.sh
 DOCKER_RUN_CMD := docker run -v ${PWD}:$(DOCKER_GO_SERVICE_PATH) --rm -it $(SERVICE_NAME)
 BUILD_BINARY_CMD := VERSION=${VERSION} ./hack/scripts/build-binary.sh
 BUILD_IMAGE_CMD := VERSION=${VERSION} ./hack/scripts/build-image.sh
-DEP_ENSURE_CMD := dep ensure
+DEPS_CMD := GO111MODULE=on go mod tidy && GO111MODULE=on go mod vendor
 DEBUG_CMD := go run ./cmd/brigade-exporter/* --debug
 DEV_CMD := $(DEBUG_CMD) --development
 FAKE_CMD := $(DEV_CMD) --fake
@@ -89,9 +88,9 @@ build-image:
 set-k8s-deps:
 	$(SET_K8S_DEPS_CMD)
 
-.PHONY: vendor
-vendor: 
-	$(VENDOR_CMD)
+.PHONY: deps
+deps:
+	$(DEPS_CMD)
 
 # Test stuff in dev
 .PHONY: unit-test
@@ -106,7 +105,7 @@ test: integration-test
 # Mocks stuff in dev
 .PHONY: mocks
 mocks: build
-	$(DOCKER_RUN_CMD) /bin/sh -c '$(MOCKS_CMD)'
+	$(MOCKS_CMD)
 
 .PHONY: dev
 dev:

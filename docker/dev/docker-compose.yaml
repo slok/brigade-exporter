@@ -2,12 +2,12 @@ version: "3"
 
 services:
   exporter:
-    build: 
+    build:
       context: ../../
       dockerfile: docker/dev/Dockerfile
     command: /bin/bash -c "go run ./cmd/brigade-exporter/* --debug --development --fake"
     volumes:
-      - ../../:/go/src/github.com/slok/brigade-exporter
+      - ../../:/src
     ports:
       - 9480
 
@@ -15,5 +15,5 @@ services:
     image: prom/prometheus
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    ports: 
+    ports:
       - 9090:9090

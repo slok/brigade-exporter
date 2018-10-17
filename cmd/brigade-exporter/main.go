@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	gracePeriod = 5 * time.Second
-	versionFMT  = "brigade-exporter %s"
+	gracePeriod  = 5 * time.Second
+	versionFMT   = "brigade-exporter %s"
+	kubeCliQPS   = 100
+	kubeCliBurst = 100
 )
 
 var (
@@ -96,13 +98,13 @@ func (m *Main) Run() error {
 			},
 			func(error) {
 				m.logger.Infof("draining connections")
-				ctx, _ := context.WithTimeout(context.Background(), gracePeriod)
+				ctx, cancel := context.WithTimeout(context.Background(), gracePeriod)
+				defer cancel()
 				if err := s.Shutdown(ctx); err != nil {
 					m.logger.Errorf("error while draining connections: %s", err)
 				}
 			},
 		)
-
 	}
 
 	return g.Run()
@@ -140,6 +142,10 @@ func (m *Main) loadKubernetesConfig() (*rest.Config, error) {
 		}
 		cfg = config
 	}
+
+	// Set better cli rate limiter.
+	cfg.QPS = kubeCliQPS
+	cfg.Burst = kubeCliBurst
 
 	return cfg, nil
 }
