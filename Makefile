@@ -2,7 +2,7 @@
 SERVICE_NAME := brigade-exporter
 
 # Path of the go service inside docker
-DOCKER_GO_SERVICE_PATH := /go/src/github.com/slok/brigade-exporter
+DOCKER_GO_SERVICE_PATH := /src
 
 # Shell to use for running scripts
 SHELL := $(shell which bash)
@@ -105,7 +105,7 @@ test: integration-test
 # Mocks stuff in dev
 .PHONY: mocks
 mocks: build
-	$(DOCKER_RUN_CMD) /bin/sh -c '$(MOCKS_CMD)'
+	$(MOCKS_CMD)
 
 .PHONY: dev
 dev:
