@@ -1,3 +1,7 @@
+## 0.x.x / 2018-xx-xx
+
+* [ENHANCEMENT] Improve concurrency when getting the builds and jobs.
+
 ## 0.2.0 / 2018-10-17
 
 * [ENHANCEMENT] Set less strict rate limit on Kubernetes client.

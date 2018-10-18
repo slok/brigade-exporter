@@ -1,6 +1,7 @@
 package brigade
 
 import (
+	"sync"
 	"time"
 
 	azurebrigade "github.com/Azure/brigade/pkg/brigade"
@@ -114,34 +115,58 @@ func (b *brigade) GetJobs() ([]*Job, error) {
 	}
 
 	// WARNING: N:M query.
-	var jobs []*Job
+	jobsC := make(chan *Job)
+	var wg sync.WaitGroup
+	wg.Add(len(builds))
+
 	for _, bld := range builds {
-		bjobs, err := b.client.GetBuildJobs(bld)
-		if err != nil {
-			return []*Job{}, err
-		}
-
-		for _, job := range bjobs {
-			if job == nil {
-				continue
-			}
-			jobs = append(jobs, &Job{
-				ID:       job.ID,
-				BuildID:  bld.ID,
-				Name:     job.Name,
-				Image:    job.Image,
-				Status:   job.Status.String(),
-				Duration: b.getJobDuration(job),
-				Creation: job.CreationTime,
-				Start:    job.StartTime,
-			})
-		}
-
+		bld := bld
+		go func() {
+			defer wg.Done()
+			b.getBuildJobs(bld, jobsC)
+		}()
 	}
+
+	// Receive job results, the range will stop when closing
+	// the channel (this is when all the goroutines have finished).
+	var jobs []*Job
+	go func() {
+		for job := range jobsC {
+			jobs = append(jobs, job)
+		}
+	}()
+
+	// Wait until finished.
+	wg.Wait()
+	close(jobsC)
 
 	return jobs, nil
 }
 
+func (b *brigade) getBuildJobs(build *azurebrigade.Build, jobsC chan<- *Job) {
+	bjobs, err := b.client.GetBuildJobs(build)
+	if err != nil {
+		b.logger.Errorf("error retrieving job from build %s: %s", build.ID, err)
+		return
+	}
+
+	for _, job := range bjobs {
+		if job == nil {
+			continue
+		}
+
+		jobsC <- &Job{
+			ID:       job.ID,
+			BuildID:  build.ID,
+			Name:     job.Name,
+			Image:    job.Image,
+			Status:   job.Status.String(),
+			Duration: b.getJobDuration(job),
+			Creation: job.CreationTime,
+			Start:    job.StartTime,
+		}
+	}
+}
 func (b *brigade) getJobDuration(job *azurebrigade.Job) time.Duration {
 	if job == nil {
 		return 0
