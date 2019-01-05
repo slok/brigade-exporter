@@ -1,7 +1,7 @@
 module github.com/slok/brigade-exporter
 
 require (
-	github.com/Azure/brigade v0.18.0
+	github.com/Azure/brigade v0.19.0
 	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fsnotify/fsnotify v1.4.7 // indirect
