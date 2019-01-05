@@ -1,3 +1,7 @@
+## 0.x.x / 2019-xx-xx
+
+* [ENHANCEMENT] Update to Brigade v0.19.0.
+
 ## 0.2.1 / 2018-10-18
 
 * [ENHANCEMENT] Improve concurrency when getting the builds and jobs.
