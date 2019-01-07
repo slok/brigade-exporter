@@ -15,13 +15,13 @@ RUN addgroup -g $gid app && \
     chown app:app -R /go && \
     chown app:app -R /src
 
-USER app
-
 # Fill go mod cache.
 RUN mkdir /tmp/cache
 COPY go.mod /tmp/cache
 COPY go.sum /tmp/cache
 RUN cd /tmp/cache && \
     go mod download
+
+USER app
 
 WORKDIR /src
